@@ -1,0 +1,1 @@
+g++ lora.c -o lora

@@ -1,2 +1,2 @@
-# rn2903
-test application for the microchip rn2903 lora module
+# atzb-x-233-usb
+sample sniffer program for atzb-x-233-usb
