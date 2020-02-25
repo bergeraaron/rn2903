@@ -84,7 +84,7 @@ main()
   ICANON  : enable canonical input
   disable all echo functionality, and don't send signals to calling program
 */
-// newtio.c_lflag = ICANON;
+ //newtio.c_lflag = ICANON;
  
 /* 
   initialize all control characters 
@@ -116,89 +116,52 @@ main()
  tcflush(fd, TCIFLUSH);
  tcsetattr(fd,TCSANOW,&newtio);
 
- unsigned char cmd[10][256];memset(cmd,0x00,256);
+ char cmd[10][256];memset(cmd,0x00,256);
 
 //common against both zigbee and btle
 //seq 1
- cmd[0][4] = 0x04;
+ sprintf(cmd[0],"sys get ver\r\n");
  //seq 2
- cmd[1][0] = 0x01;
+ sprintf(cmd[1],"mac pause\r\n");
  //seq 3
- cmd[2][0] = 0x01;
+ sprintf(cmd[2],"radio set pwr 10\r\n");
  //seq 4
- cmd[3][0] = 0x01;
- //seq 5
- cmd[4][0] = 0x01;
- //seq 6
- cmd[5][0] = 0x01;
-//seq 7
- cmd[6][0] = 0x01;
-//end
- cmd[9][0] = 0x01;
+ sprintf(cmd[3],"radio rx 0\r\n");
 
  int ctr = 0;
  int cmdctr = 0;
  cmdctr=0;
 
-for(int xp=0;xp<cmd_len[cmdctr];xp++)
-    printf("%02X ",cmd[cmdctr][xp]);
-printf(" ");
-write(fd,cmd[cmdctr],cmd_len[cmdctr]);
-
+printf("%s\n",cmd[cmdctr]);
+write(fd,cmd[cmdctr],strlen(cmd[cmdctr]));
+usleep(5000);
+cmdctr++;
 while(1)
  {
         //printf("ctr:%d\n",ctr);
         res = read(fd,buf,255);
         if(res > 0)
         {
-                printf("res:%d ctr:%d ",res,ctr);
-
-                for(int xp = 0;xp < res;xp++)
-                {
-                        printf("%02X ",buf[xp]);
-                }
-
-                printf("\n");
-                
-                if(cmdctr < 7)
+                printf("res:%d ctr:%d buf:%s\n",res,ctr,buf);
+                tcflush(fd, TCIFLUSH);
+                if(cmdctr < 4)
                 {
                   //send next command
-                  printf("send next cmd:%d len:%d ",cmdctr,cmd_len[cmdctr]);
-                  for(int xp=0;xp<cmd_len[cmdctr];xp++)
-                    printf("%02X ",cmd[cmdctr][xp]);
-                  printf(" ");
-                  write(fd,cmd[cmdctr],cmd_len[cmdctr]);
-		  usleep(10);
+                  printf("send next cmd:%d cmd:%s\n",cmdctr,cmd[cmdctr]);
+                  write(fd,cmd[cmdctr],strlen(cmd[cmdctr]));
+            		  usleep(5000);
                   cmdctr++;
                 }
                 ctr = 0;
+          memset(buf,0x00,255);
         }
-        usleep(1);
+        usleep(10);
         ctr++;
         if(ctr > 100000000)
                 break;
  }
- printf("write end\n");
- write(fd,cmd[9],cmd_len[9]);
-
-        res = read(fd,buf,255);
-        if(res > 0)
-        {
-                printf("res:%d ctr:%d ",res,ctr);
-
-                for(int xp = 0;xp < res;xp++)
-                {
-                        printf("%02X ",buf[xp]);
-                }
-
-                printf("\n");
-
-        }
-
 
  /* restore the old port settings */
  tcsetattr(fd,TCSANOW,&oldtio);
-
-
  
 }
